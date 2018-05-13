@@ -26,15 +26,41 @@ class AlertViewController: UIViewController {
     }
     
     func showAlertMessage() {
-        let alertController: UIAlertController = UIAlertController(title: "選択", message: "項目を選択してください。", preferredStyle: .alert)
+        /// チェックマークテーブルビューの位置
+        let increaseAndDecreaseValues: CGFloat = 60
+        /// セルが増えるごとに増加させる値
+        var incrementValues = 0.0687
+        /// セルのベースの値
+        var baseValues = 0.21
         
-        let height = NSLayoutConstraint(item: alertController.view, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: self.view.frame.height * 0.80)
+        // 画面ごとの制約を取得
+        switch UIScreen.main.bounds.size {
+        case CGSize(width: 320.0, height: 568.0):  // 4  inch
+            incrementValues = 0.081
+            baseValues = 0.245
+        case CGSize(width: 375.0, height: 667.0):  // 4.7inch
+            incrementValues = 0.0687
+            baseValues = 0.21
+        case CGSize(width: 414.0, height: 736.0):  // 5.5inch
+            incrementValues = 0.0624
+            baseValues = 0.19
+        case CGSize(width: 375.0, height: 812.0):  // 5.8inch
+            incrementValues = 0.0565
+            baseValues = 0.173
+        default: break
+        }
+        
+        let alertController: UIAlertController = UIAlertController(title: "選択", message: "項目を選択してください。", preferredStyle: .alert)
+        /// 高さ制約
+        let constant = cellText.first!.count < 10 ? CGFloat(baseValues + incrementValues * Double(cellText.first!.count - 1)) : 0.80
+        let height = NSLayoutConstraint(item: alertController.view, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: view.frame.height * constant)
         alertController.view.addConstraint(height)
         
         self.tableView.reloadData()
         
         
-        defaultAction = UIAlertAction(title: "OK", style: .default) { action in
+        defaultAction = UIAlertAction(title: "OK", style: .default) { _ in
+            self.tableView.top -= increaseAndDecreaseValues
             let selectedRows = self.tableView.indexPathsForSelectedRows
             let selectedData = selectedRows?.map { self.cellText[$0.section][$0.row] }
             let selectedSortedData = selectedData?.sorted()
@@ -42,12 +68,14 @@ class AlertViewController: UIViewController {
         }
         defaultAction?.isEnabled = false
         
-        let cancelAction: UIAlertAction = UIAlertAction(title: "キャンセル", style: .cancel)
+        let cancelAction: UIAlertAction = UIAlertAction(title: "キャンセル", style: .cancel) { _ in
+            self.tableView.top -= increaseAndDecreaseValues
+        }
         alertController.addAction(cancelAction)
         alertController.addAction(defaultAction!)
         
         self.present(alertController, animated: true) {
-            self.tableView.top = alertController.view.top + 25
+            self.tableView.top += increaseAndDecreaseValues
             self.tableView.frame.size.width = alertController.view.frame.width
             self.tableView.frame.size.height = (alertController.view.frame.height - self.tableView.top) - 45
             alertController.view.addSubview(self.tableView)
